@@ -3,8 +3,9 @@ body{background:#0A0A0A;color:#fff;font-family:Arial;margin:0;padding:0}
 .btnMenu{position:fixed;top:10px;left:10px;z-index:1000;font-size:28px;background:#FFD700;border:none;color:#000;padding:8px 14px;border-radius:8px;cursor:pointer}
 .menu{position:fixed;left:-250px;top:0;width:230px;height:100%;background:#111;padding:15px;border-right:3px solid #FFD700;transition:.3s;z-index:999;overflow-y:auto}
 .menu.ativo{left:0}.menu h3{color:#FFD700;text-align:center}
-.jogoSalvoMenu{background:#222;padding:8px;margin:5px 0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #FFD700}
+.jogoSalvoMenu{background:#222;padding:8px;margin:5px 0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #FFD700;position:relative}
 .jogoSalvoMenu:hover{background:#333}
+.btnApagarJogo{position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;padding:2px 6px;border-radius:4px;font-size:10px;cursor:pointer}
 .conteudo{padding:60px 15px 15px;text-align:center}h1{color:#FFD700}
 button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:5px;color:#000}
 .btnFiltro{background:#333;color:#fff;border:2px solid #555}.btnFiltro.ativo{background:#FFD700;color:#000;border-color:#FFD700}
@@ -20,13 +21,21 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 .resultadoGerado h3{color:#FFD700;margin:0 0 10px 0;text-align:center}
 .infoJogo{font-size:13px;margin:5px 0}
 .infoJogo span{font-weight:bold;color:#FFD700}
+textarea{width:90%;height:120px;background:#222;color:#fff;border:2px solid #FFD700;border-radius:8px;padding:10px;margin:10px 0;font-family:monospace}
 </style></head><body>
 <button class="btnMenu" onclick="toggleMenu()">☰</button>
 <div class="menu" id="menuLateral">
 <h3>💾 JOGOS SALVOS</h3>
-<p style="font-size:12px;color:#aaa;text-align:center">Max: 50 jogos</p>
+<p style="font-size:12px;color:#aaa;text-align:center">Total: <span id="qtdJogos">0</span>/50</p>
+
+<div class="tituloSecao">IMPORTAR SEUS JOGOS</div>
+<textarea id="txtImportar" placeholder="Cole seus jogos aqui. 1 por linha:
+01,02,03,04,05,06,07,08,09,10,11,12,13,14,15
+02,04,06,08,10,12,14,16,18,20,22,23,24,25,01"></textarea>
+<button onclick="importarJogos()" style="width:100%">📥 IMPORTAR JOGOS</button>
+
 <div id="listaJogosSalvos"></div>
-<button onclick="limparTodosJogos()" style="background:red;color:#fff;width:100%">🗑️ LIMPAR TUDO</button>
+<button onclick="limparTodosJogos()" style="background:red;color:#fff;width:100%;margin-top:10px">🗑️ LIMPAR TUDO</button>
 </div>
 
 <div class="conteudo">
@@ -62,14 +71,32 @@ const padroes5x5=['2.3.3.4.3','3.3.3.3.3','2.2.4.4.3','3.4.2.3.3','1.4.4.3.3','2
 const padroesZUD=['Z 3-2 | U 4-3 | D 2-1','Z 2-3 | U 3-4 | D 2-1','Z 4-1 | U 3-4 | D 1-2','Z 3-2 | U 5-2 | D 1-2','Z 2-3 | U 4-3 | D 2-1'];
 const opcoesPI=['6.9','7.8','8.7','9.6'];
 
-window.onload=function(){ // CORRIGIDO: só roda depois que carregar
-criarGrid();montarBotoes();atualizarMenu();
-}
+window.onload=function(){criarGrid();montarBotoes();atualizarMenu()}
 
 function toggleMenu(){document.getElementById('menuLateral').classList.toggle('ativo')}
 function criarGrid(){let h="";for(let i=1;i<=25;i++){let n=i.toString().padStart(2,'0');h+=`<div class="numero" id="n${n}" onclick="toggleFixo('${n}')">${n}</div>`}document.getElementById('gridNumeros').innerHTML=h}
 function toggleFixo(n){if(numerosFixos.includes(n)){numerosFixos=numerosFixos.filter(x=>x!=n);document.getElementById('n'+n).classList.remove('numeroFixo')}else{if(numerosFixos.length>=7)return alert("Máximo 7 números fixos");numerosFixos.push(n);document.getElementById('n'+n).classList.add('numeroFixo')}}
 function limparFixos(){numerosFixos=[];document.querySelectorAll('.numeroFixo').forEach(e=>e.classList.remove('numeroFixo'))}
+
+// NOVA FUNÇÃO PARA IMPORTAR
+function importarJogos(){
+let txt=document.getElementById('txtImportar').value.trim();
+if(!txt)return alert("Cole os jogos primeiro");
+let linhas=txt.split('\n');
+let adicionados=0;
+linhas.forEach(linha=>{
+let nums=linha.replace(/\s/g,'').split(',').map(n=>n.padStart(2,'0'));
+if(nums.length==15 && bancoGerador.length<50){
+  if(!verificarDuplicado(nums)){
+    let obj={id:Date.now()+Math.random(),numeros:nums,data:"IMPORTADO",'5x5':calcular5x5(nums.map(Number)),zud:calcularZUD(nums.map(Number)),pi:calcularPI(nums.map(Number))};
+    bancoGerador.push(obj);adicionados++;
+  }
+}
+});
+localStorage.setItem('bancoGerador',JSON.stringify(bancoGerador));
+atualizarMenu();montarBotoes();document.getElementById('txtImportar').value="";
+alert(`${adicionados} jogos importados! Agora gere baseado neles.`);
+}
 
 function montarBotoes(){
 let h5x5="",hZUD="",hPI="",hSeq="";
@@ -77,27 +104,26 @@ padroes5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="se
 padroesZUD.forEach(p=>hZUD+=`<button class="btnOpcao" id="bZUD_${p}" onclick="setZUD('${p}')">${p}</button>`);
 opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
 
-// Gerar sequências de 5 a 10 números que mais repetem no banco
 let mapaSeq={};bancoGerador.forEach(j=>{let d=[...j.numeros].sort((a,b)=>a-b);for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}});
-let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,10);
+let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,15);
 seqs.forEach(s=>hSeq+=`<button class="btnOpcao" id="bSeq_${s}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
 document.getElementById('lista5x5').innerHTML=h5x5;document.getElementById('listaZUD').innerHTML=hZUD;
-document.getElementById('listaPI').innerHTML=hPI;document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
+document.getElementById('listaPI').innerHTML=hPI;document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Importe jogos primeiro</p>";
 }
 function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}function setPI(p){filtroPI=filtroPI==p?null:p;atualizar()}
-function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()} // CORRIGIDO AQUI
+function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
 function atualizar(){document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));if(filtro5x5)document.getElementById('b5x5_'+filtro5x5)?.classList.add('ativo');if(filtroZUD)document.getElementById('bZUD_'+filtroZUD)?.classList.add('ativo');if(filtroPI)document.getElementById('bPI_'+filtroPI)?.classList.add('ativo');if(sequenciaFixa)document.getElementById('bSeq_'+sequenciaFixa)?.classList.add('ativo')}
 
 function calcular5x5(d){return`${d.filter(n=>n>=1&&n<=5).length}.${d.filter(n=>n>=6&&n<=10).length}.${d.filter(n=>n>=11&&n<=15).length}.${d.filter(n=>n>=16&&n<=20).length}.${d.filter(n=>n>=21&&n<=25).length}`}
 function calcularZUD(d){let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d.filter(n=>n>=20);return`Z ${z.filter(n=>n%2==0).length}-${z.length-z.filter(n=>n%2==0).length} | U ${u.filter(n=>n%2==0).length}-${u.length-u.filter(n=>n%2==0).length} | D ${d2.filter(n=>n%2==0).length}-${d2.length-d2.filter(n=>n%2==0).length}`}
 function calcularPI(d){return`${d.filter(n=>n%2==0).length}.${d.filter(n=>n%2!=0).length}`}
 function gerarComb(arr,t){let r=[];function c(i,o){if(o.length==t){r.push([...o]);return}for(let j=i;j<arr.length;j++){o.push(arr[j]);c(j+1,o);o.pop()}}c(0,[]);return r}
-
 function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.filter(n=>j.numeros.includes(n)).length;if(iguais>=15)return true}return false}
 
 function gerarJogo(){
-if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
+if(bancoGerador.length<10)return alert("Importe pelo menos 10 jogos primeiro");
+if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido.");
 if(!filtro5x5&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 let tentativas=0,jogo;
 while(tentativas<20000){
@@ -109,7 +135,7 @@ while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(po
 jogo.sort((a,b)=>a-b);
 let p5=calcular5x5(jogo.map(Number)),pZ=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
 if((!filtro5x5||p5==filtro5x5)&&(!filtroZUD||pZ==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
-  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pZ,pPI);montarBotoes();break} // atualiza sequencias
+  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pZ,pPI);montarBotoes();break}
 tentativas++;if(tentativas>=20000)return alert("Não consegui gerar com esses filtros. Tente outros.");
 }
 }}
@@ -133,13 +159,17 @@ document.getElementById('resultado').innerHTML=`<div class="resultadoGerado">
 }
 function copiar(t){navigator.clipboard.writeText(t);alert("Copiado!")}
 
+function apagarJogo(id){bancoGerador=bancoGerador.filter(j=>j.id!=id);localStorage.setItem('bancoGerador',JSON.stringify(bancoGerador));atualizarMenu();montarBotoes()} // NOVO
+
 function atualizarMenu(){
 let h="";bancoGerador.slice().reverse().forEach(j=>{
 h+=`<div class="jogoSalvoMenu" onclick="navigator.clipboard.writeText('${j.numeros.join(", ")}')">
+<button class="btnApagarJogo" onclick="event.stopPropagation();apagarJogo(${j.id})">X</button>
 <b>#${bancoGerador.indexOf(j)+1}</b> ${j.numeros.join(", ")}<br>
 <small>5x5:${j['5x5']} | PI:${j.pi}</small>
 </div>`;
 });document.getElementById('listaJogosSalvos').innerHTML=h||"<p style='color:#aaa;font-size:12px'>Nenhum jogo salvo</p>";
+document.getElementById('qtdJogos').innerText=bancoGerador.length;
 }
-function limparTodosJogos(){if(confirm("Apagar todos os 50 jogos?")){bancoGerador=[];localStorage.setItem('bancoGerador','[]');atualizarMenu();document.getElementById('resultado').innerHTML="";montarBotoes()}}
+function limparTodosJogos(){if(confirm("Apagar todos os jogos?")){bancoGerador=[];localStorage.setItem('bancoGerador','[]');atualizarMenu();document.getElementById('resultado').innerHTML="";montarBotoes()}}
 </script></body></html>
