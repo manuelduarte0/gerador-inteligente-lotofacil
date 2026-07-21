@@ -33,7 +33,7 @@ textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD
 <div class="conteudo">
 <h1>LOTOFACIL</h1>
 <div class="boxGerador">
-<div class="tituloSecao">🎯 ESCOLHA OS FILTROS</div>
+<div class="tituloSecao">🎯 ESCOLHA OS FILTROS - PODE CRUZAR TUDO</div>
 
 <div class="tituloSecao">1. FÓRMULA 5x5</div>
 <div id="lista5x5" class="listaOpcoes"></div>
@@ -54,7 +54,7 @@ textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD
 <div class="tituloSecao">6. SEQUÊNCIAS QUE MAIS REPETEM</div>
 <div id="listaSeq" class="listaOpcoes"></div>
 
-<button style="font-size:18px;padding:15px 30px;margin-top:15px;width:90%" onclick="gerarJogo()">🎲 GERAR JOGO</button>
+<button style="font-size:18px;padding:15px 30px;margin-top:15px;width:90%" onclick="gerarJogo()">🎲 GERAR CRUZANDO FILTROS</button>
 <div id="resultado"></div>
 </div>
 </div>
@@ -134,34 +134,65 @@ function calcularZUD(d){let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d
 function calcularPI(d){return`${d.filter(n=>n%2==0).length}.${d.filter(n=>n%2!=0).length}`}
 function gerarComb(arr,t){let r=[];function c(i,o){if(o.length==t){r.push([...o]);return}for(let j=i;j<arr.length;j++){o.push(arr[j]);c(j+1,o);o.pop()}}c(0,[]);return r}
 
-// CORRIGIDO: Agora compara jogo por jogo de verdade
 function jogoExiste(novo){
   let novoStr = novo.join(',');
   for(let j of bancoGerador){
     let jogoStr = j.numeros.join(',');
-    if(jogoStr === novoStr) return true; // 100% igual
+    if(jogoStr === novoStr) return true;
   }
   return false;
+}
+
+// NOVA FUNCAO: TENTA MONTAR O JOGO OBEDECENDO OS FILTROS
+function gerarComFiltros(){
+  let jogo = [];
+  let pool = Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
+  
+  // 1. Adiciona fixos e sequencia primeiro
+  if(numerosFixos.length>0)jogo=[...numerosFixos];
+  if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
+  
+  // 2. Se tem PI, 5x5, etc, tenta respeitar
+  let tentativasInternas = 0;
+  while(jogo.length < 15 && tentativasInternas < 5000){
+    tentativasInternas++;
+    let cand = pool[Math.floor(Math.random()*pool.length)];
+    if(jogo.includes(cand)) continue;
+    
+    let teste = [...jogo, cand].sort((a,b)=>a-b);
+    let p5=calcular5x5(teste.map(Number)),pPad=calcularPadrao(teste.map(Number)),pZUD=calcularZUD(teste.map(Number)),pPI=calcularPI(teste.map(Number));
+    
+    let ok = true;
+    if(filtro5x5 &&!p5.startsWith(filtro5x5.split('.').slice(0,teste.length>5?5:teste.length).join('.'))) ok=false;
+    //Simplificando: só valida no final
+    
+    if(ok){jogo.push(cand); pool=pool.filter(n=>n!=cand);}
+  }
+  
+  while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(pool.splice(idx,1)[0])}
+  return jogo.sort((a,b)=>a-b);
 }
 
 function gerarJogo(){
 if(bancoGerador.length<10)return alert("Importe pelo menos 10 jogos primeiro");
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido.");
-if(!filtro5x5&&!filtroPadrao&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 
 let tentativas=0,jogo;
-while(tentativas<100000){
-jogo=[];let pool=Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
-if(numerosFixos.length>0)jogo=[...numerosFixos];
-if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
-pool=pool.filter(n=>!jogo.includes(n));
-while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(pool.splice(idx,1)[0])}
-jogo.sort((a,b)=>a-b);
+while(tentativas<50000){
+jogo = gerarComFiltros();
+
 let p5=calcular5x5(jogo.map(Number)),pPad=calcularPadrao(jogo.map(Number)),pZUD=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
-if((!filtro5x5||p5==filtro5x5)&&(!filtroPadrao||pPad==filtroPadrao)&&(!filtroZUD||pZUD==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
-  if(!jogoExiste(jogo)){salvarJogo(jogo,p5,pPad,pZUD,pPI);montarBotoes();return} // USA A NOVA FUNCAO
+
+let bate5x5 =!filtro5x5 || p5==filtro5x5;
+let batePadrao =!filtroPadrao || pPad==filtroPadrao;
+let bateZUD =!filtroZUD || pZUD==filtroZUD;
+let batePI =!filtroPI || pPI==filtroPI;
+
+if(bate5x5 && batePadrao && bateZUD && batePI){
+  if(!jogoExiste(jogo)){salvarJogo(jogo,p5,pPad,pZUD,pPI);montarBotoes();return}
 }tentativas++;}
-alert("Não achei nenhum jogo novo com esses filtros juntos.\n\nDica: Tente usar só 1 ou 2 filtros por vez.");
+
+alert("Não consegui gerar mesmo cruzando os filtros.\nTente tirar 1 filtro ou importar mais jogos.");
 }
 
 function salvarJogo(n,p5,pPad,pZUD,pPI){
