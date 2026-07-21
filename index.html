@@ -17,7 +17,6 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 .numero{width:100%;aspect-ratio:1/1;border:2px solid #444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;background:#222;cursor:pointer;font-size:14px}
 .numeroFixo{background:#FFD700!important;color:#000!important;border-color:#FFD700!important}
 .resultadoGerado{background:#111;border:3px solid #FFD700;padding:15px;margin:15px 0;border-radius:10px;text-align:left}
-.resultadoGerado h3{color:#FFD700;margin:0 0 10px 0;text-align:center}
 textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD700;border-radius:8px;padding:8px;margin:10px 0;font-family:monospace;font-size:11px}
 </style></head><body>
 <button class="btnMenu" onclick="toggleMenu()">☰</button>
@@ -25,11 +24,8 @@ textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD
 <div class="menu" id="menuLateral">
 <h3>💾 JOGOS SALVOS</h3>
 <p style="font-size:12px;color:#aaa;text-align:center">Total: <span id="qtdJogos">0</span>/50</p>
-
-<div class="tituloSecao">IMPORTAR SEUS JOGOS</div>
 <textarea id="txtImportar" placeholder="01,02,03,04,05,06,07,08,09,10,11,12,13,14,15"></textarea>
 <button onclick="importarJogos()" style="width:100%">📥 IMPORTAR JOGOS</button>
-
 <div id="listaJogosSalvos"></div>
 <button onclick="limparTodosJogos()" style="background:red;color:#fff;width:100%;margin-top:10px">🗑️ LIMPAR TUDO</button>
 </div>
@@ -66,9 +62,6 @@ textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD
 <script>
 let bancoGerador=JSON.parse(localStorage.getItem('bancoGerador'))||[];
 let filtro5x5=null,filtroPadrao=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa="";
-const padroes5x5=['2.3.3.4.3','3.3.3.3.3','2.2.4.4.3','3.4.2.3.3','1.4.4.3.3','2.4.3.3.3'];
-const padroesPadrao=['3.6.6','4.7.4','5.5.5','4.6.5','3.7.5','4.8.3'];
-const padroesZUD=['2.2 / 3.4 / 2.1','3.3 / 4.3 / 1.2','2.3 / 3.4 / 2.1','3.2 / 4.3 / 1.2','2.2 / 4.3 / 2.1'];
 const opcoesPI=['6.9','7.8','8.7','9.6'];
 
 document.addEventListener('DOMContentLoaded',function(){
@@ -100,23 +93,35 @@ alert(`${adicionados} jogos importados!`);
 
 function montarBotoes(){
 try{
-let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
-padroes5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p}</button>`);
-padroesPadrao.forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPadrao_${p}" onclick="setPadrao('${p}')">${p}</button>`);
-padroesZUD.forEach(p=>hZUD+=`<button class="btnOpcao" id="bZUD_${p}" onclick="setZUD('${p}')">${p}</button>`);
-opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
+  // AGORA PUXA TUDO DO BANCO
+  let mapa5x5={},mapaPadrao={},mapaZUD={},mapaPI={},mapaSeq={};
+  
+  bancoGerador.forEach(j=>{
+    if(!mapa5x5[j['5x5']])mapa5x5[j['5x5']]=0;mapa5x5[j['5x5']]++;
+    if(!mapaPadrao[j.padrao])mapaPadrao[j.padrao]=0;mapaPadrao[j.padrao]++;
+    if(!mapaZUD[j.zud])mapaZUD[j.zud]=0;mapaZUD[j.zud]++;
+    if(!mapaPI[j.pi])mapaPI[j.pi]=0;mapaPI[j.pi]++;
+    
+    let d=[...j.numeros].sort((a,b)=>a-b);
+    for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}
+  });
+  
+  let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
+  
+  Object.keys(mapa5x5).sort((a,b)=>mapa5x5[b]-mapa5x5[a]).slice(0,15).forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p} (${mapa5x5[p]}x)</button>`);
+  Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,15).forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPadrao_${p}" onclick="setPadrao('${p}')">${p} (${mapaPadrao[p]}x)</button>`);
+  Object.keys(mapaZUD).sort((a,b)=>mapaZUD[b]-mapaZUD[a]).slice(0,15).forEach(p=>hZUD+=`<button class="btnOpcao" id="bZUD_${p}" onclick="setZUD('${p}')">${p} (${mapaZUD[p]}x)</button>`);
+  opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
+  Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,15).forEach(s=>hSeq+=`<button class="btnOpcao" id="bSeq_${s}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
-let mapaSeq={};bancoGerador.forEach(j=>{let d=[...j.numeros].sort((a,b)=>a-b);for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}});
-let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,15);
-seqs.forEach(s=>hSeq+=`<button class="btnOpcao" id="bSeq_${s}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
-
-document.getElementById('lista5x5').innerHTML=h5x5;
-document.getElementById('listaPadrao').innerHTML=hPadrao;
-document.getElementById('listaZUD').innerHTML=hZUD;
-document.getElementById('listaPI').innerHTML=hPI;
-document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Importe 10+ jogos</p>";
+  document.getElementById('lista5x5').innerHTML=h5x5||"<p style='color:#aaa;font-size:12px'>Importe jogos</p>";
+  document.getElementById('listaPadrao').innerHTML=hPadrao||"<p style='color:#aaa;font-size:12px'>Importe jogos</p>";
+  document.getElementById('listaZUD').innerHTML=hZUD||"<p style='color:#aaa;font-size:12px'>Importe jogos</p>";
+  document.getElementById('listaPI').innerHTML=hPI;
+  document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Importe 10+ jogos</p>";
 }catch(e){console.log(e)}
 }
+
 function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}
 function setPadrao(p){filtroPadrao=filtroPadrao==p?null:p;atualizar()}
 function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}
