@@ -10,7 +10,7 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 .btnFiltro{background:#333;color:#fff;border:2px solid #555}.btnFiltro.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .boxGerador{background:#222;padding:20px;border-radius:15px;margin:20px auto;max-width:500px;border:3px solid #FFD700}
 .tituloSecao{color:#FFD700;font-size:16px;margin:10px 0}
-.listaOpcoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.listaOpcoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0;min-height:40px}
 .btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff}
 .btnOpcao.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .gridNumeros{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:300px;margin:10px auto}
@@ -20,7 +20,6 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 .resultadoGerado h3{color:#FFD700;margin:0 0 10px 0;text-align:center}
 .infoJogo{font-size:13px;margin:5px 0}
 .infoJogo span{font-weight:bold;color:#FFD700}
-.alerta{color:red;font-size:12px;margin-top:10px}
 </style></head><body>
 <button class="btnMenu" onclick="toggleMenu()">☰</button>
 <div class="menu" id="menuLateral">
@@ -58,10 +57,14 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 
 <script>
 let bancoGerador=JSON.parse(localStorage.getItem('bancoGerador'))||[];
-let filtro5x5=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa=[];
+let filtro5x5=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa="";
 const padroes5x5=['2.3.3.4.3','3.3.3.3.3','2.2.4.4.3','3.4.2.3.3','1.4.4.3.3','2.4.3.3.3'];
 const padroesZUD=['Z 3-2 | U 4-3 | D 2-1','Z 2-3 | U 3-4 | D 2-1','Z 4-1 | U 3-4 | D 1-2','Z 3-2 | U 5-2 | D 1-2','Z 2-3 | U 4-3 | D 2-1'];
 const opcoesPI=['6.9','7.8','8.7','9.6'];
+
+window.onload=function(){ // CORRIGIDO: só roda depois que carregar
+criarGrid();montarBotoes();atualizarMenu();
+}
 
 function toggleMenu(){document.getElementById('menuLateral').classList.toggle('ativo')}
 function criarGrid(){let h="";for(let i=1;i<=25;i++){let n=i.toString().padStart(2,'0');h+=`<div class="numero" id="n${n}" onclick="toggleFixo('${n}')">${n}</div>`}document.getElementById('gridNumeros').innerHTML=h}
@@ -75,7 +78,7 @@ padroesZUD.forEach(p=>hZUD+=`<button class="btnOpcao" id="bZUD_${p}" onclick="se
 opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
 
 // Gerar sequências de 5 a 10 números que mais repetem no banco
-let mapaSeq={};bancoGerador.forEach(j=>{let d=j.numeros.sort((a,b)=>a-b);for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}});
+let mapaSeq={};bancoGerador.forEach(j=>{let d=[...j.numeros].sort((a,b)=>a-b);for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}});
 let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,10);
 seqs.forEach(s=>hSeq+=`<button class="btnOpcao" id="bSeq_${s}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
@@ -83,8 +86,8 @@ document.getElementById('lista5x5').innerHTML=h5x5;document.getElementById('list
 document.getElementById('listaPI').innerHTML=hPI;document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
 }
 function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}function setPI(p){filtroPI=filtroPI==p?null:p;atualizar()}
-function setSeq(s){sequenciaFixa=sequenciaFixa.join(',')==s?[]:s.split(',');atualizar()}
-function atualizar(){document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));if(filtro5x5)document.getElementById('b5x5_'+filtro5x5)?.classList.add('ativo');if(filtroZUD)document.getElementById('bZUD_'+filtroZUD)?.classList.add('ativo');if(filtroPI)document.getElementById('bPI_'+filtroPI)?.classList.add('ativo');if(sequenciaFixa.length>0)document.getElementById('bSeq_'+sequenciaFixa.join(','))?.classList.add('ativo')}
+function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()} // CORRIGIDO AQUI
+function atualizar(){document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));if(filtro5x5)document.getElementById('b5x5_'+filtro5x5)?.classList.add('ativo');if(filtroZUD)document.getElementById('bZUD_'+filtroZUD)?.classList.add('ativo');if(filtroPI)document.getElementById('bPI_'+filtroPI)?.classList.add('ativo');if(sequenciaFixa)document.getElementById('bSeq_'+sequenciaFixa)?.classList.add('ativo')}
 
 function calcular5x5(d){return`${d.filter(n=>n>=1&&n<=5).length}.${d.filter(n=>n>=6&&n<=10).length}.${d.filter(n=>n>=11&&n<=15).length}.${d.filter(n=>n>=16&&n<=20).length}.${d.filter(n=>n>=21&&n<=25).length}`}
 function calcularZUD(d){let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d.filter(n=>n>=20);return`Z ${z.filter(n=>n%2==0).length}-${z.length-z.filter(n=>n%2==0).length} | U ${u.filter(n=>n%2==0).length}-${u.length-u.filter(n=>n%2==0).length} | D ${d2.filter(n=>n%2==0).length}-${d2.length-d2.filter(n=>n%2==0).length}`}
@@ -95,21 +98,21 @@ function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.fil
 
 function gerarJogo(){
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
-if(!filtro5x5&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa.length==0)return alert("Selecione pelo menos 1 filtro");
+if(!filtro5x5&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 let tentativas=0,jogo;
 while(tentativas<20000){
 jogo=[];let pool=Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
 if(numerosFixos.length>0)jogo=[...numerosFixos];
-if(sequenciaFixa.length>0)jogo=[...new Set([...jogo,...sequenciaFixa])];
+if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
 pool=pool.filter(n=>!jogo.includes(n));
 while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(pool.splice(idx,1)[0])}
 jogo.sort((a,b)=>a-b);
 let p5=calcular5x5(jogo.map(Number)),pZ=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
 if((!filtro5x5||p5==filtro5x5)&&(!filtroZUD||pZ==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
-  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pZ,pPI);break}
+  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pZ,pPI);montarBotoes();break} // atualiza sequencias
 tentativas++;if(tentativas>=20000)return alert("Não consegui gerar com esses filtros. Tente outros.");
 }
-}
+}}
 
 function salvarJogo(n,p5,pZ,pPI){
 if(bancoGerador.length>=50)return;
@@ -138,7 +141,5 @@ h+=`<div class="jogoSalvoMenu" onclick="navigator.clipboard.writeText('${j.numer
 </div>`;
 });document.getElementById('listaJogosSalvos').innerHTML=h||"<p style='color:#aaa;font-size:12px'>Nenhum jogo salvo</p>";
 }
-function limparTodosJogos(){if(confirm("Apagar todos os 50 jogos?")){bancoGerador=[];localStorage.setItem('bancoGerador','[]');atualizarMenu();document.getElementById('resultado').innerHTML=""}}
-
-criarGrid();montarBotoes();atualizarMenu();
+function limparTodosJogos(){if(confirm("Apagar todos os 50 jogos?")){bancoGerador=[];localStorage.setItem('bancoGerador','[]');atualizarMenu();document.getElementById('resultado').innerHTML="";montarBotoes()}}
 </script></body></html>
