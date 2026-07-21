@@ -1,36 +1,41 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Gerador Inteligente Lotofácil</title><style>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>LOTOFACIL INTELIGENTE</title><style>
+*{box-sizing:border-box}
 body{background:#0A0A0A;color:#fff;font-family:Arial;margin:0;padding:0}
 .btnMenu{position:fixed;top:10px;left:10px;z-index:1000;font-size:28px;background:#FFD700;border:none;color:#000;padding:8px 14px;border-radius:8px;cursor:pointer}
-.menu{position:fixed;left:-250px;top:0;width:230px;height:100%;background:#111;padding:15px;border-right:3px solid #FFD700;transition:.3s;z-index:999;overflow-y:auto}
-.menu.ativo{left:0}.menu h3{color:#FFD700;text-align:center}
-.jogoSalvoMenu{background:#222;padding:8px;margin:5px 0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #FFD700;position:relative}
+.menu{position:fixed;left:-260px;top:0;width:240px;height:100%;background:#111;padding:15px;border-right:3px solid #FFD700;transition:.3s;z-index:999;overflow-y:auto}
+.menu.ativo{left:0}.menu h3{color:#FFD700;text-align:center;margin:5px 0}
+.jogoSalvoMenu{background:#222;padding:8px;margin:5px 0;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #FFD700;position:relative;word-break:break-all}
 .btnApagarJogo{position:absolute;top:2px;right:2px;background:red;color:#fff;border:none;padding:2px 6px;border-radius:4px;font-size:10px;cursor:pointer}
-.conteudo{padding:60px 15px 15px;text-align:center}h1{color:#FFD700}
-button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:5px;color:#000}
+.conteudo{padding:60px 15px 15px;text-align:center}h1{color:#FFD700;margin:0 0 15px 0}
+button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:5px;color:#000;font-size:14px}
 .boxGerador{background:#222;padding:20px;border-radius:15px;margin:20px auto;max-width:500px;border:3px solid #FFD700}
-.tituloSecao{color:#FFD700;font-size:16px;margin:10px 0;font-weight:bold}
-.listaOpcoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0;min-height:40px}
+.tituloSecao{color:#FFD700;font-size:16px;margin:15px 0 8px 0;font-weight:bold}
+.listaOpcoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0;min-height:45px}
 .btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff}
 .btnOpcao.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .gridNumeros{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:300px;margin:10px auto}
-.numero{width:100%;aspect-ratio:1/1;border:2px solid #444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;background:#222;cursor:pointer}
+.numero{width:100%;aspect-ratio:1/1;border:2px solid #444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;background:#222;cursor:pointer;font-size:14px}
 .numeroFixo{background:#FFD700!important;color:#000!important;border-color:#FFD700!important}
 .resultadoGerado{background:#111;border:3px solid #FFD700;padding:15px;margin:15px 0;border-radius:10px;text-align:left}
-textarea{width:90%;height:120px;background:#222;color:#fff;border:2px solid #FFD700;border-radius:8px;padding:10px;margin:10px 0;font-family:monospace}
+.resultadoGerado h3{color:#FFD700;margin:0 0 10px 0;text-align:center}
+textarea{width:95%;height:100px;background:#222;color:#fff;border:2px solid #FFD700;border-radius:8px;padding:8px;margin:10px 0;font-family:monospace;font-size:11px}
 </style></head><body>
 <button class="btnMenu" onclick="toggleMenu()">☰</button>
+
 <div class="menu" id="menuLateral">
 <h3>💾 JOGOS SALVOS</h3>
 <p style="font-size:12px;color:#aaa;text-align:center">Total: <span id="qtdJogos">0</span>/50</p>
-<textarea id="txtImportar" placeholder="Cole seus jogos aqui. 1 por linha:
-01,02,03,04,05,06,07,08,09,10,11,12,13,14,15"></textarea>
+
+<div class="tituloSecao">IMPORTAR SEUS JOGOS</div>
+<textarea id="txtImportar" placeholder="01,02,03,04,05,06,07,08,09,10,11,12,13,14,15"></textarea>
 <button onclick="importarJogos()" style="width:100%">📥 IMPORTAR JOGOS</button>
+
 <div id="listaJogosSalvos"></div>
 <button onclick="limparTodosJogos()" style="background:red;color:#fff;width:100%;margin-top:10px">🗑️ LIMPAR TUDO</button>
 </div>
 
 <div class="conteudo">
-<h1>🎰 GERADOR INTELIGENTE LOTOFÁCIL</h1>
+<h1>LOTOFACIL</h1>
 <div class="boxGerador">
 <div class="tituloSecao">🎯 ESCOLHA OS FILTROS</div>
 
@@ -53,7 +58,7 @@ textarea{width:90%;height:120px;background:#222;color:#fff;border:2px solid #FFD
 <div class="tituloSecao">6. SEQUÊNCIAS QUE MAIS REPETEM</div>
 <div id="listaSeq" class="listaOpcoes"></div>
 
-<button style="font-size:18px;padding:15px 30px;margin-top:15px" onclick="gerarJogo()">🎲 GERAR JOGO INTELIGENTE</button>
+<button style="font-size:18px;padding:15px 30px;margin-top:15px;width:90%" onclick="gerarJogo()">🎲 GERAR JOGO</button>
 <div id="resultado"></div>
 </div>
 </div>
@@ -66,7 +71,9 @@ const padroesPadrao=['3.6.6','4.7.4','5.5.5','4.6.5','3.7.5','4.8.3'];
 const padroesZUD=['2.2 / 3.4 / 2.1','3.3 / 4.3 / 1.2','2.3 / 3.4 / 2.1','3.2 / 4.3 / 1.2','2.2 / 4.3 / 2.1'];
 const opcoesPI=['6.9','7.8','8.7','9.6'];
 
-window.onload=function(){criarGrid();montarBotoes();atualizarMenu()}
+document.addEventListener('DOMContentLoaded',function(){
+  criarGrid();montarBotoes();atualizarMenu();
+});
 
 function toggleMenu(){document.getElementById('menuLateral').classList.toggle('ativo')}
 function criarGrid(){let h="";for(let i=1;i<=25;i++){let n=i.toString().padStart(2,'0');h+=`<div class="numero" id="n${n}" onclick="toggleFixo('${n}')">${n}</div>`}document.getElementById('gridNumeros').innerHTML=h}
@@ -92,6 +99,7 @@ alert(`${adicionados} jogos importados!`);
 }
 
 function montarBotoes(){
+try{
 let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
 padroes5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p}</button>`);
 padroesPadrao.forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPadrao_${p}" onclick="setPadrao('${p}')">${p}</button>`);
@@ -102,9 +110,17 @@ let mapaSeq={};bancoGerador.forEach(j=>{let d=[...j.numeros].sort((a,b)=>a-b);fo
 let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,15);
 seqs.forEach(s=>hSeq+=`<button class="btnOpcao" id="bSeq_${s}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
-document.getElementById('lista5x5').innerHTML=h5x5;document.getElementById('listaPadrao').innerHTML=hPadrao;document.getElementById('listaZUD').innerHTML=hZUD;document.getElementById('listaPI').innerHTML=hPI;document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Importe 10+ jogos</p>";
+document.getElementById('lista5x5').innerHTML=h5x5;
+document.getElementById('listaPadrao').innerHTML=hPadrao;
+document.getElementById('listaZUD').innerHTML=hZUD;
+document.getElementById('listaPI').innerHTML=hPI;
+document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Importe 10+ jogos</p>";
+}catch(e){console.log(e)}
 }
-function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}function setPadrao(p){filtroPadrao=filtroPadrao==p?null:p;atualizar()}function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}function setPI(p){filtroPI=filtroPI==p?null:p;atualizar()}
+function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}
+function setPadrao(p){filtroPadrao=filtroPadrao==p?null:p;atualizar()}
+function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}
+function setPI(p){filtroPI=filtroPI==p?null:p;atualizar()}
 function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
 function atualizar(){document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));if(filtro5x5)document.getElementById('b5x5_'+filtro5x5)?.classList.add('ativo');if(filtroPadrao)document.getElementById('bPadrao_'+filtroPadrao)?.classList.add('ativo');if(filtroZUD)document.getElementById('bZUD_'+filtroZUD)?.classList.add('ativo');if(filtroPI)document.getElementById('bPI_'+filtroPI)?.classList.add('ativo');if(sequenciaFixa)document.getElementById('bSeq_'+sequenciaFixa)?.classList.add('ativo')}
 
@@ -129,8 +145,9 @@ while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(po
 jogo.sort((a,b)=>a-b);
 let p5=calcular5x5(jogo.map(Number)),pPad=calcularPadrao(jogo.map(Number)),pZUD=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
 if((!filtro5x5||p5==filtro5x5)&&(!filtroPadrao||pPad==filtroPadrao)&&(!filtroZUD||pZUD==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
-  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pPad,pZUD,pPI);montarBotoes();break}
-}tentativas++;if(tentativas>=20000)return alert("Não consegui gerar. Tente outros filtros.");
+  if(!verificarDuplicado(jogo)){salvarJogo(jogo,p5,pPad,pZUD,pPI);montarBotoes();return}
+}tentativas++;}
+alert("Não consegui gerar com esses filtros. Tente outros.");
 }
 
 function salvarJogo(n,p5,pPad,pZUD,pPI){
