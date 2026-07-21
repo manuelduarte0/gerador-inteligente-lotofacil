@@ -100,9 +100,19 @@ try{
     if(!mapaPadrao[j.padrao])mapaPadrao[j.padrao]=0;mapaPadrao[j.padrao]++;
     if(!mapaZUD[j.zud])mapaZUD[j.zud]=0;mapaZUD[j.zud]++;
     if(!mapaPI[j.pi])mapaPI[j.pi]=0;mapaPI[j.pi]++;
-    
+  });
+  
+  // OTIMIZADO: Só pega sequencias dos 10 primeiros jogos pra não travar
+  let jogosPraSeq = bancoGerador.slice(-10);
+  jogosPraSeq.forEach(j=>{
     let d=[...j.numeros].sort((a,b)=>a-b);
-    for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}
+    for(let t=5;t<=8;t++){ // Reduzi de 10 pra 8 pra ficar mais leve
+      gerarComb(d,t).slice(0,50).forEach(c=>{ // Pega só 50 comb por jogo
+        let k=c.join(',');
+        if(!mapaSeq[k])mapaSeq[k]=0;
+        mapaSeq[k]++
+      })
+    }
   });
   
   let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
@@ -129,7 +139,7 @@ function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
 function atualizar(){document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));if(filtro5x5)document.getElementById('b5x5_'+filtro5x5)?.classList.add('ativo');if(filtroPadrao)document.getElementById('bPadrao_'+filtroPadrao)?.classList.add('ativo');if(filtroZUD)document.getElementById('bZUD_'+filtroZUD)?.classList.add('ativo');if(filtroPI)document.getElementById('bPI_'+filtroPI)?.classList.add('ativo');if(sequenciaFixa)document.getElementById('bSeq_'+sequenciaFixa)?.classList.add('ativo')}
 
 function calcular5x5(d){return`${d.filter(n=>n>=1&&n<=5).length}.${d.filter(n=>n>=6&&n<=10).length}.${d.filter(n=>n>=11&&n<=15).length}.${d.filter(n=>n>=16&&n<=20).length}.${d.filter(n=>n>=21&&n<=25).length}`}
-function calcularPadrao(d){return`${d.filter(n=>n<=9).length}.${d.filter(n=>n>=10&&n<=19).length}.${d.filter(n=>n>=20).length}`}
+function calcularPadrao(d){let a=d.filter(n=>n<=9).length,b=d.filter(n=>n>=10&&n<=19).length,c=d.filter(n=>n>=20).length;return`${a}.${b}.${c}`} // CORRIGIDO
 function calcularZUD(d){let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d.filter(n=>n>=20);return`${z.filter(n=>n%2==0).length}.${z.length-z.filter(n=>n%2==0).length} / ${u.filter(n=>n%2==0).length}.${u.length-u.filter(n=>n%2==0).length} / ${d2.filter(n=>n%2==0).length}.${d2.length-d2.filter(n=>n%2==0).length}`}
 function calcularPI(d){return`${d.filter(n=>n%2==0).length}.${d.filter(n=>n%2!=0).length}`}
 function gerarComb(arr,t){let r=[];function c(i,o){if(o.length==t){r.push([...o]);return}for(let j=i;j<arr.length;j++){o.push(arr[j]);c(j+1,o);o.pop()}}c(0,[]);return r}
@@ -143,44 +153,18 @@ function jogoExiste(novo){
   return false;
 }
 
-// NOVA FUNCAO: TENTA MONTAR O JOGO OBEDECENDO OS FILTROS
-function gerarComFiltros(){
-  let jogo = [];
-  let pool = Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
-  
-  // 1. Adiciona fixos e sequencia primeiro
-  if(numerosFixos.length>0)jogo=[...numerosFixos];
-  if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
-  
-  // 2. Se tem PI, 5x5, etc, tenta respeitar
-  let tentativasInternas = 0;
-  while(jogo.length < 15 && tentativasInternas < 5000){
-    tentativasInternas++;
-    let cand = pool[Math.floor(Math.random()*pool.length)];
-    if(jogo.includes(cand)) continue;
-    
-    let teste = [...jogo, cand].sort((a,b)=>a-b);
-    let p5=calcular5x5(teste.map(Number)),pPad=calcularPadrao(teste.map(Number)),pZUD=calcularZUD(teste.map(Number)),pPI=calcularPI(teste.map(Number));
-    
-    let ok = true;
-    if(filtro5x5 &&!p5.startsWith(filtro5x5.split('.').slice(0,teste.length>5?5:teste.length).join('.'))) ok=false;
-    //Simplificando: só valida no final
-    
-    if(ok){jogo.push(cand); pool=pool.filter(n=>n!=cand);}
-  }
-  
-  while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(pool.splice(idx,1)[0])}
-  return jogo.sort((a,b)=>a-b);
-}
-
 function gerarJogo(){
 if(bancoGerador.length<10)return alert("Importe pelo menos 10 jogos primeiro");
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido.");
 
 let tentativas=0,jogo;
 while(tentativas<50000){
-jogo = gerarComFiltros();
-
+jogo=[];let pool=Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
+if(numerosFixos.length>0)jogo=[...numerosFixos];
+if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
+pool=pool.filter(n=>!jogo.includes(n));
+while(jogo.length<15){let idx=Math.floor(Math.random()*pool.length);jogo.push(pool.splice(idx,1)[0])}
+jogo.sort((a,b)=>a-b);
 let p5=calcular5x5(jogo.map(Number)),pPad=calcularPadrao(jogo.map(Number)),pZUD=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
 
 let bate5x5 =!filtro5x5 || p5==filtro5x5;
@@ -192,7 +176,7 @@ if(bate5x5 && batePadrao && bateZUD && batePI){
   if(!jogoExiste(jogo)){salvarJogo(jogo,p5,pPad,pZUD,pPI);montarBotoes();return}
 }tentativas++;}
 
-alert("Não consegui gerar mesmo cruzando os filtros.\nTente tirar 1 filtro ou importar mais jogos.");
+alert("Não consegui gerar com esses filtros.\nTente tirar 1 filtro ou importar mais jogos.");
 }
 
 function salvarJogo(n,p5,pPad,pZUD,pPI){
