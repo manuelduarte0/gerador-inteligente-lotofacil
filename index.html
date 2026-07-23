@@ -15,11 +15,11 @@ body{background:#0A0A0A;color:#fff;font-family:Arial;margin:0;padding:0}
 .conteudo{padding:60px 15px 15px;text-align:center}
 h1{color:#FFD700}
 button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:5px;color:#000}
+.btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff}
+.btnOpcao.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .boxGerador{background:#222;padding:20px;border-radius:15px;margin:20px auto;max-width:500px;border:3px solid #FFD700}
 .tituloSecao{color:#FFD700;font-size:16px;margin:10px 0}
 .listaOpcoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0;min-height:40px}
-.btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff}
-.btnOpcao.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .gridNumeros{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;max-width:300px;margin:10px auto}
 .numero{width:100%;aspect-ratio:1/1;border:2px solid #444;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;background:#222;cursor:pointer}
 .numeroFixo{background:#FFD700!important;color:#000!important;border-color:#FFD700!important}
@@ -46,17 +46,20 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 <div class="tituloSecao">1. FÓRMULA 5x5</div>
 <div id="lista5x5" class="listaOpcoes"></div>
 
-<div class="tituloSecao">2. FÓRMULA ZUD</div>
+<div class="tituloSecao">2. FÓRMULA PADRÃO</div>
+<div id="listaPadrao" class="listaOpcoes"></div>
+
+<div class="tituloSecao">3. FÓRMULA ZUD</div>
 <div id="listaZUD" class="listaOpcoes"></div>
 
-<div class="tituloSecao">3. PARES E ÍMPARES PI</div>
+<div class="tituloSecao">4. PARES E ÍMPARES PI</div>
 <div id="listaPI" class="listaOpcoes"></div>
 
-<div class="tituloSecao">4. ATÉ 7 NÚMEROS FIXOS</div>
+<div class="tituloSecao">5. ATÉ 7 NÚMEROS FIXOS</div>
 <div id="gridNumeros" class="gridNumeros"></div>
 <button onclick="limparFixos()">LIMPAR FIXOS</button>
 
-<div class="tituloSecao">5. SEQUÊNCIAS QUE MAIS REPETEM</div>
+<div class="tituloSecao">6. SEQUÊNCIAS QUE MAIS REPETEM</div>
 <div id="listaSeq" class="listaOpcoes"></div>
 
 <button style="font-size:18px;padding:15px 30px;margin-top:15px" onclick="gerarJogo()">🎲 GERAR JOGO INTELIGENTE</button>
@@ -66,7 +69,7 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 
 <script>
 let bancoGerador=JSON.parse(localStorage.getItem('bancoGerador'))||[];
-let filtro5x5=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa="";
+let filtro5x5=null,filtroPadrao=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa="";
 const padroes5x5=['2.3.3.4.3','3.3.3.3.3','2.2.4.4.3','3.4.2.3.3','1.4.4.3.3','2.4.3.3.3'];
 const padroesZUD=['Z3-2U4-3D2-1','Z2-3U3-4D2-1','Z4-1U3-4D1-2','Z3-2U5-2D1-2','Z2-3U4-3D2-1'];
 const opcoesPI=['6.9','7.8','8.7','9.6'];
@@ -104,9 +107,23 @@ numerosFixos=[];
 document.querySelectorAll('.numeroFixo').forEach(e=>e.classList.remove('numeroFixo'))
 }
 
+function calcularPadrao(d){
+return`${d.filter(n=>n>=1&&n<=9).length}.${d.filter(n=>n>=10&&n<=19).length}.${d.filter(n=>n>=20&&n<=25).length}`
+}
+
 function montarBotoes(){
-let h5x5="",hZUD="",hPI="",hSeq="";
+let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
 padroes5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p}</button>`);
+
+let mapaPadrao={};
+bancoGerador.forEach(j=>{
+let p=calcularPadrao(j.numeros.map(Number));
+if(!mapaPadrao[p])mapaPadrao[p]=0;
+mapaPadrao[p]++
+});
+let padroes=Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,5);
+padroes.forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPad_${p}" onclick="setPadrao('${p}')">${p} (${mapaPadrao[p]}x)</button>`);
+
 padroesZUD.forEach((p,i)=>hZUD+=`<button class="btnOpcao" id="bZUD_${i}" onclick="setZUD('${p}')">${p.replace('Z','Z ').replace('U',' | U ').replace('D',' | D ')}</button>`);
 opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
 
@@ -125,12 +142,14 @@ let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-ma
 seqs.forEach((s,i)=>hSeq+=`<button class="btnOpcao" id="bSeq_${i}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
 document.getElementById('lista5x5').innerHTML=h5x5;
+document.getElementById('listaPadrao').innerHTML=hPadrao||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
 document.getElementById('listaZUD').innerHTML=hZUD;
 document.getElementById('listaPI').innerHTML=hPI;
 document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>"
 }
 
 function set5x5(p){filtro5x5=filtro5x5==p?null:p;atualizar()}
+function setPadrao(p){filtroPadrao=filtroPadrao==p?null:p;atualizar()}
 function setZUD(p){filtroZUD=filtroZUD==p?null:p;atualizar()}
 function setPI(p){filtroPI=filtroPI==p?null:p;atualizar()}
 function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
@@ -138,6 +157,16 @@ function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
 function atualizar(){
 document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));
 padroes5x5.forEach(p=>{if(filtro5x5==p)document.getElementById('b5x5_'+p)?.classList.add('ativo')});
+
+let mapaPadrao={};
+bancoGerador.forEach(j=>{
+let p=calcularPadrao(j.numeros.map(Number));
+if(!mapaPadrao[p])mapaPadrao[p]=0;
+mapaPadrao[p]++
+});
+let padroes=Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,5);
+padroes.forEach(p=>{if(filtroPadrao==p)document.getElementById('bPad_'+p)?.classList.add('ativo')});
+
 padroesZUD.forEach((p,i)=>{if(filtroZUD==p)document.getElementById('bZUD_'+i)?.classList.add('ativo')});
 opcoesPI.forEach(p=>{if(filtroPI==p)document.getElementById('bPI_'+p)?.classList.add('ativo')});
 
@@ -164,7 +193,7 @@ function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.fil
 
 function gerarJogo(){
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
-if(!filtro5x5&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
+if(!filtro5x5&&!filtroPadrao&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 let tentativas=0,jogo;
 while(tentativas<50000){
 jogo=[];
@@ -177,10 +206,10 @@ let idx=Math.floor(Math.random()*pool.length);
 jogo.push(pool.splice(idx,1)[0])
 }
 jogo.sort((a,b)=>a-b);
-let p5=calcular5x5(jogo.map(Number)),pZ=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
-if((!filtro5x5||p5==filtro5x5)&&(!filtroZUD||pZ==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
+let p5=calcular5x5(jogo.map(Number)),pPad=calcularPadrao(jogo.map(Number)),pZ=calcularZUD(jogo.map(Number)),pPI=calcularPI(jogo.map(Number));
+if((!filtro5x5||p5==filtro5x5)&&(!filtroPadrao||pPad==filtroPadrao)&&(!filtroZUD||pZ==filtroZUD)&&(!filtroPI||pPI==filtroPI)){
 if(!verificarDuplicado(jogo)){
-salvarJogo(jogo,p5,pZ,pPI);
+salvarJogo(jogo,p5,pPad,pZ,pPI);
 montarBotoes();
 break
 }
@@ -190,9 +219,9 @@ if(tentativas>=50000)return alert("Não consegui gerar com esses filtros. Tente 
 }
 }
 
-function salvarJogo(n,p5,pZ,pPI){
+function salvarJogo(n,p5,pPad,pZ,pPI){
 if(bancoGerador.length>=50)return;
-let obj={id:Date.now(),numeros:n,data:new Date().toLocaleString(),'5x5':p5,zud:pZ,pi:pPI};
+let obj={id:Date.now(),numeros:n,data:new Date().toLocaleString(),'5x5':p5,padrao:pPad,zud:pZ,pi:pPI};
 bancoGerador.push(obj);
 localStorage.setItem('bancoGerador',JSON.stringify(bancoGerador));
 mostrarResultado(obj);
@@ -204,6 +233,7 @@ document.getElementById('resultado').innerHTML=`<div class="resultadoGerado">
 <h3>🎯 JOGO GERADO #${bancoGerador.length}</h3>
 <p style="font-size:18px;text-align:center"><b>${j.numeros.join(", ")}</b></p>
 <p class="infoJogo"><span>5x5:</span> ${j['5x5']}</p>
+<p class="infoJogo"><span>Padrão:</span> ${j.padrao}</p>
 <p class="infoJogo"><span>ZUD:</span> ${j.zud.replace('Z','Z ').replace('U',' | U ').replace('D',' | D ')}</p>
 <p class="infoJogo"><span>PI:</span> ${j.pi}</p>
 <p class="infoJogo"><span>Data:</span> ${j.data}</p>
@@ -218,7 +248,7 @@ let h="";
 bancoGerador.slice().reverse().forEach(j=>{
 h+=`<div class="jogoSalvoMenu" onclick="navigator.clipboard.writeText('${j.numeros.join(", ")}')">
 <b>#${bancoGerador.indexOf(j)+1}</b> ${j.numeros.join(", ")}<br>
-<small>5x5:${j['5x5']} | PI:${j.pi}</small>
+<small>Padrão:${j.padrao} | PI:${j.pi}</small>
 </div>`
 });
 document.getElementById('listaJogosSalvos').innerHTML=h||"<p style='color:#aaa;font-size:12px'>Nenhum jogo salvo</p>"
