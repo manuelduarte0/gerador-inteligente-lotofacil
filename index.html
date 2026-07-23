@@ -34,7 +34,7 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 <button class="btnMenu" onclick="toggleMenu()">☰</button>
 <div class="menu" id="menuLateral">
 <h3>💾 JOGOS SALVOS</h3>
-<p style="font-size:12px;color:#aaa;text-align:center">Max: 50 jogos</p>
+<p style="font-size:12px;color:#aaa;text-align:center">Max: 100 jogos</p>
 <div id="listaJogosSalvos"></div>
 <button onclick="limparTodosJogos()" style="background:red;color:#fff;width:100%">🗑️ LIMPAR TUDO</button>
 </div>
@@ -138,31 +138,26 @@ function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.fil
 function montarBotoes(){
 let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
 
-// 5x5 COM CONTADOR
 let mapa5x5={};
 bancoGerador.forEach(j=>{let p=calcular5x5(j.numeros.map(Number));if(!mapa5x5[p])mapa5x5[p]=0;mapa5x5[p]++});
 let p5x5=Object.keys(mapa5x5).sort((a,b)=>mapa5x5[b]-mapa5x5[a]).slice(0,6);
 p5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p} (${mapa5x5[p]}x)</button>`);
 
-// PADRAO COM CONTADOR
 let mapaPadrao={};
 bancoGerador.forEach(j=>{let p=calcularPadrao(j.numeros.map(Number));if(!mapaPadrao[p])mapaPadrao[p]=0;mapaPadrao[p]++});
 let padroes=Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,5);
 padroes.forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPad_${p}" onclick="setPadrao('${p}')">${p} (${mapaPadrao[p]}x)</button>`);
 
-// ZUD COM CONTADOR BASEADO NOS SALVOS
 let mapaZUD={};
 bancoGerador.forEach(j=>{let p=calcularZUD(j.numeros.map(Number));if(!mapaZUD[p])mapaZUD[p]=0;mapaZUD[p]++});
 let zuds=Object.keys(mapaZUD).sort((a,b)=>mapaZUD[b]-mapaZUD[a]).slice(0,5);
 zuds.forEach((p,i)=>hZUD+=`<button class="btnOpcao" id="bZUD_${i}" onclick="setZUD('${p}')">${p} (${mapaZUD[p]}x)</button>`);
 
-// PI COM CONTADOR
 let mapaPI={};
 bancoGerador.forEach(j=>{let p=calcularPI(j.numeros.map(Number));if(!mapaPI[p])mapaPI[p]=0;mapaPI[p]++});
 let pis=Object.keys(mapaPI).sort((a,b)=>mapaPI[b]-mapaPI[a]).slice(0,4);
 pis.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p} (${mapaPI[p]}x)</button>`);
 
-// SEQUENCIAS COM CONTADOR
 let mapaSeq={};
 bancoGerador.forEach(j=>{
 let d=[...j.numeros].sort((a,b)=>a-b);
@@ -210,7 +205,7 @@ Object.keys(mapaSeq).forEach((s,i)=>{if(sequenciaFixa==s)document.getElementById
 }
 
 function gerarJogo(){
-if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
+if(bancoGerador.length>=100)return alert("Limite de 100 jogos atingido. Apague alguns.");
 if(!filtro5x5&&!filtroPadrao&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 let tentativas=0,jogo;
 while(tentativas<100000){
@@ -244,7 +239,7 @@ if(tentativas>=100000)return alert("Filtros muito restritos. Tire 1 filtro.")
 }
 
 function salvarJogo(n,p5,pPad,pZ,pPI){
-if(bancoGerador.length>=50)return;
+if(bancoGerador.length>=100)return;
 let obj={id:Date.now(),numeros:n,data:new Date().toLocaleString(),'5x5':p5,padrao:pPad,zud:pZ,pi:pPI};
 bancoGerador.push(obj);
 localStorage.setItem('bancoGerador',JSON.stringify(bancoGerador));
@@ -279,7 +274,7 @@ document.getElementById('listaJogosSalvos').innerHTML=h||"<p style='color:#aaa;f
 }
 
 function limparTodosJogos(){
-if(confirm("Apagar todos os 50 jogos?")){
+if(confirm("Apagar todos os 100 jogos?")){
 bancoGerador=[];
 localStorage.setItem('bancoGerador','[]');
 atualizarMenu();
