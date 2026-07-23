@@ -71,9 +71,6 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 <script>
 let bancoGerador=JSON.parse(localStorage.getItem('bancoGerador'))||[];
 let filtro5x5=null,filtroPadrao=null,filtroZUD=null,filtroPI=null,numerosFixos=[],sequenciaFixa="";
-const padroes5x5=['2.3.3.4.3','3.3.3.3.3','2.2.4.4.3','3.4.2.3.3','1.4.4.3.3','2.4.3.3.3'];
-const padroesZUD=['Z3-2U4-3D2-1','Z2-3U3-4D2-1','Z4-1U3-4D1-2','Z3-2U5-2D1-2','Z2-3U4-3D2-1'];
-const opcoesPI=['6.9','7.8','8.7','9.6'];
 
 window.onload=function(){
 corrigirBancoAntigo();
@@ -87,6 +84,10 @@ let mudou=false;
 bancoGerador.forEach(j=>{
 if(!j.padrao){
 j.padrao=calcularPadrao(j.numeros.map(Number));
+mudou=true;
+}
+if(!j.zud){
+j.zud=calcularZUD(j.numeros.map(Number));
 mudou=true;
 }
 });
@@ -124,22 +125,44 @@ function calcularPadrao(d){
 return`${d.filter(n=>n>=1&&n<=9).length}.${d.filter(n=>n>=10&&n<=19).length}.${d.filter(n=>n>=20&&n<=25).length}`
 }
 
+function calcularZUD(d){
+let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d.filter(n=>n>=20);
+return`Z${z.filter(n=>n%2==0).length}-${z.length-z.filter(n=>n%2==0).length} | U${u.filter(n=>n%2==0).length}-${u.length-u.filter(n=>n%2==0).length} | D${d2.filter(n=>n%2==0).length}-${d2.length-d2.filter(n=>n%2==0).length}`
+}
+
+function calcular5x5(d){return`${d.filter(n=>n>=1&&n<=5).length}.${d.filter(n=>n>=6&&n<=10).length}.${d.filter(n=>n>=11&&n<=15).length}.${d.filter(n=>n>=16&&n<=20).length}.${d.filter(n=>n>=21&&n<=25).length}`}
+function calcularPI(d){return`${d.filter(n=>n%2==0).length}.${d.filter(n=>n%2!=0).length}`}
+function gerarComb(arr,t){let r=[];function c(i,o){if(o.length==t){r.push([...o]);return}for(let j=i;j<arr.length;j++){o.push(arr[j]);c(j+1,o);o.pop()}}c(0,[]);return r}
+function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.filter(n=>j.numeros.includes(n)).length;if(iguais>=15)return true}return false}
+
 function montarBotoes(){
 let h5x5="",hPadrao="",hZUD="",hPI="",hSeq="";
-padroes5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p}</button>`);
 
+// 5x5 COM CONTADOR
+let mapa5x5={};
+bancoGerador.forEach(j=>{let p=calcular5x5(j.numeros.map(Number));if(!mapa5x5[p])mapa5x5[p]=0;mapa5x5[p]++});
+let p5x5=Object.keys(mapa5x5).sort((a,b)=>mapa5x5[b]-mapa5x5[a]).slice(0,6);
+p5x5.forEach(p=>h5x5+=`<button class="btnOpcao" id="b5x5_${p}" onclick="set5x5('${p}')">${p} (${mapa5x5[p]}x)</button>`);
+
+// PADRAO COM CONTADOR
 let mapaPadrao={};
-bancoGerador.forEach(j=>{
-let p=calcularPadrao(j.numeros.map(Number));
-if(!mapaPadrao[p])mapaPadrao[p]=0;
-mapaPadrao[p]++
-});
+bancoGerador.forEach(j=>{let p=calcularPadrao(j.numeros.map(Number));if(!mapaPadrao[p])mapaPadrao[p]=0;mapaPadrao[p]++});
 let padroes=Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,5);
 padroes.forEach(p=>hPadrao+=`<button class="btnOpcao" id="bPad_${p}" onclick="setPadrao('${p}')">${p} (${mapaPadrao[p]}x)</button>`);
 
-padroesZUD.forEach((p,i)=>hZUD+=`<button class="btnOpcao" id="bZUD_${i}" onclick="setZUD('${p}')">${p.replace('Z','Z ').replace('U',' | U ').replace('D',' | D ')}</button>`);
-opcoesPI.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p}</button>`);
+// ZUD COM CONTADOR BASEADO NOS SALVOS
+let mapaZUD={};
+bancoGerador.forEach(j=>{let p=calcularZUD(j.numeros.map(Number));if(!mapaZUD[p])mapaZUD[p]=0;mapaZUD[p]++});
+let zuds=Object.keys(mapaZUD).sort((a,b)=>mapaZUD[b]-mapaZUD[a]).slice(0,5);
+zuds.forEach((p,i)=>hZUD+=`<button class="btnOpcao" id="bZUD_${i}" onclick="setZUD('${p}')">${p} (${mapaZUD[p]}x)</button>`);
 
+// PI COM CONTADOR
+let mapaPI={};
+bancoGerador.forEach(j=>{let p=calcularPI(j.numeros.map(Number));if(!mapaPI[p])mapaPI[p]=0;mapaPI[p]++});
+let pis=Object.keys(mapaPI).sort((a,b)=>mapaPI[b]-mapaPI[a]).slice(0,4);
+pis.forEach(p=>hPI+=`<button class="btnOpcao" id="bPI_${p}" onclick="setPI('${p}')">${p} (${mapaPI[p]}x)</button>`);
+
+// SEQUENCIAS COM CONTADOR
 let mapaSeq={};
 bancoGerador.forEach(j=>{
 let d=[...j.numeros].sort((a,b)=>a-b);
@@ -154,10 +177,10 @@ mapaSeq[k]++
 let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,10);
 seqs.forEach((s,i)=>hSeq+=`<button class="btnOpcao" id="bSeq_${i}" onclick="setSeq('${s}')">${s} (${mapaSeq[s]}x)</button>`);
 
-document.getElementById('lista5x5').innerHTML=h5x5;
+document.getElementById('lista5x5').innerHTML=h5x5||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
 document.getElementById('listaPadrao').innerHTML=hPadrao||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
-document.getElementById('listaZUD').innerHTML=hZUD;
-document.getElementById('listaPI').innerHTML=hPI;
+document.getElementById('listaZUD').innerHTML=hZUD||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
+document.getElementById('listaPI').innerHTML=hPI||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>";
 document.getElementById('listaSeq').innerHTML=hSeq||"<p style='color:#aaa;font-size:12px'>Salve jogos primeiro</p>"
 }
 
@@ -169,40 +192,22 @@ function setSeq(s){sequenciaFixa=sequenciaFixa==s?"":s;atualizar()}
 
 function atualizar(){
 document.querySelectorAll('.btnOpcao').forEach(b=>b.classList.remove('ativo'));
-padroes5x5.forEach(p=>{if(filtro5x5==p)document.getElementById('b5x5_'+p)?.classList.add('ativo')});
 
-let mapaPadrao={};
-bancoGerador.forEach(j=>{
-let p=calcularPadrao(j.numeros.map(Number));
-if(!mapaPadrao[p])mapaPadrao[p]=0;
-mapaPadrao[p]++
-});
-let padroes=Object.keys(mapaPadrao).sort((a,b)=>mapaPadrao[b]-mapaPadrao[a]).slice(0,5);
-padroes.forEach(p=>{if(filtroPadrao==p)document.getElementById('bPad_'+p)?.classList.add('ativo')});
+let mapa5x5={};bancoGerador.forEach(j=>{let p=calcular5x5(j.numeros.map(Number));if(!mapa5x5[p])mapa5x5[p]=0;mapa5x5[p]++});
+Object.keys(mapa5x5).forEach(p=>{if(filtro5x5==p)document.getElementById('b5x5_'+p)?.classList.add('ativo')});
 
-padroesZUD.forEach((p,i)=>{if(filtroZUD==p)document.getElementById('bZUD_'+i)?.classList.add('ativo')});
-opcoesPI.forEach(p=>{if(filtroPI==p)document.getElementById('bPI_'+p)?.classList.add('ativo')});
+let mapaPadrao={};bancoGerador.forEach(j=>{let p=calcularPadrao(j.numeros.map(Number));if(!mapaPadrao[p])mapaPadrao[p]=0;mapaPadrao[p]++});
+Object.keys(mapaPadrao).forEach(p=>{if(filtroPadrao==p)document.getElementById('bPad_'+p)?.classList.add('ativo')});
 
-let mapaSeq={};
-bancoGerador.forEach(j=>{
-let d=[...j.numeros].sort((a,b)=>a-b);
-for(let t=5;t<=10;t++){
-gerarComb(d,t).forEach(c=>{
-let k=c.join(',');
-if(!mapaSeq[k])mapaSeq[k]=0;
-mapaSeq[k]++
-})
+let mapaZUD={};bancoGerador.forEach(j=>{let p=calcularZUD(j.numeros.map(Number));if(!mapaZUD[p])mapaZUD[p]=0;mapaZUD[p]++});
+Object.keys(mapaZUD).forEach((p,i)=>{if(filtroZUD==p)document.getElementById('bZUD_'+i)?.classList.add('ativo')});
+
+let mapaPI={};bancoGerador.forEach(j=>{let p=calcularPI(j.numeros.map(Number));if(!mapaPI[p])mapaPI[p]=0;mapaPI[p]++});
+Object.keys(mapaPI).forEach(p=>{if(filtroPI==p)document.getElementById('bPI_'+p)?.classList.add('ativo')});
+
+let mapaSeq={};bancoGerador.forEach(j=>{let d=[...j.numeros].sort((a,b)=>a-b);for(let t=5;t<=10;t++){gerarComb(d,t).forEach(c=>{let k=c.join(',');if(!mapaSeq[k])mapaSeq[k]=0;mapaSeq[k]++})}});
+Object.keys(mapaSeq).forEach((s,i)=>{if(sequenciaFixa==s)document.getElementById('bSeq_'+i)?.classList.add('ativo')})
 }
-});
-let seqs=Object.keys(mapaSeq).filter(k=>mapaSeq[k]>=2).sort((a,b)=>mapaSeq[b]-mapaSeq[a]).slice(0,10);
-seqs.forEach((s,i)=>{if(sequenciaFixa==s)document.getElementById('bSeq_'+i)?.classList.add('ativo')})
-}
-
-function calcular5x5(d){return`${d.filter(n=>n>=1&&n<=5).length}.${d.filter(n=>n>=6&&n<=10).length}.${d.filter(n=>n>=11&&n<=15).length}.${d.filter(n=>n>=16&&n<=20).length}.${d.filter(n=>n>=21&&n<=25).length}`}
-function calcularZUD(d){let z=d.filter(n=>n<=9),u=d.filter(n=>n>=10&&n<=19),d2=d.filter(n=>n>=20);return`Z${z.filter(n=>n%2==0).length}-${z.length-z.filter(n=>n%2==0).length}U${u.filter(n=>n%2==0).length}-${u.length-u.filter(n=>n%2==0).length}D${d2.filter(n=>n%2==0).length}-${d2.length-d2.filter(n=>n%2==0).length}`}
-function calcularPI(d){return`${d.filter(n=>n%2==0).length}.${d.filter(n=>n%2!=0).length}`}
-function gerarComb(arr,t){let r=[];function c(i,o){if(o.length==t){r.push([...o]);return}for(let j=i;j<arr.length;j++){o.push(arr[j]);c(j+1,o);o.pop()}}c(0,[]);return r}
-function verificarDuplicado(novo){for(let j of bancoGerador){let iguais=novo.filter(n=>j.numeros.includes(n)).length;if(iguais>=15)return true}return false}
 
 function gerarJogo(){
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
@@ -211,12 +216,8 @@ let tentativas=0,jogo;
 while(tentativas<100000){
 jogo=[];
 let pool=Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
-
-// FORÇA OS FILTROS NA GERAÇÃO
 if(numerosFixos.length>0)jogo=[...numerosFixos];
 if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
-
-// Se tem filtro Padrao, já pré-seleciona as quantidades
 if(filtroPadrao){
 let [q1,q2,q3]=filtroPadrao.split('.').map(Number);
 let p1=pool.filter(n=>n>='01'&&n<='09');let p2=pool.filter(n=>n>='10'&&n<='19');let p3=pool.filter(n=>n>='20'&&n<='25');
@@ -225,7 +226,6 @@ while(jogo.filter(n=>n>='10'&&n<='19').length<q2&&p2.length>0){let idx=Math.floo
 while(jogo.filter(n=>n>='20'&&n<='25').length<q3&&p3.length>0){let idx=Math.floor(Math.random()*p3.length);let val=p3.splice(idx,1)[0];if(!jogo.includes(val))jogo.push(val)}
 pool=pool.filter(n=>!jogo.includes(n));
 }
-
 while(jogo.length<15){
 let idx=Math.floor(Math.random()*pool.length);
 jogo.push(pool.splice(idx,1)[0])
@@ -237,7 +237,7 @@ if(!verificarDuplicado(jogo)){
 salvarJogo(jogo,p5,pPad,pZ,pPI);
 montarBotoes();
 break
-}
+}}
 tentativas++;
 if(tentativas>=100000)return alert("Filtros muito restritos. Tire 1 filtro.")
 }
@@ -258,7 +258,7 @@ document.getElementById('resultado').innerHTML=`<div class="resultadoGerado">
 <p style="font-size:18px;text-align:center"><b>${j.numeros.join(", ")}</b></p>
 <p class="infoJogo"><span>5x5:</span> ${j['5x5']}</p>
 <p class="infoJogo"><span>Padrão:</span> ${j.padrao}</p>
-<p class="infoJogo"><span>ZUD:</span> ${j.zud.replace('Z','Z ').replace('U',' | U ').replace('D',' | D ')}</p>
+<p class="infoJogo"><span>ZUD:</span> ${j.zud}</p>
 <p class="infoJogo"><span>PI:</span> ${j.pi}</p>
 <p class="infoJogo"><span>Data:</span> ${j.data}</p>
 <button onclick="copiar('${j.numeros.join(", ")}')">📋 COPIAR</button>
