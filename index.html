@@ -15,7 +15,7 @@ body{background:#0A0A0A;color:#fff;font-family:Arial;margin:0;padding:0}
 .conteudo{padding:60px 15px 15px;text-align:center}
 h1{color:#FFD700}
 button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;cursor:pointer;font-weight:bold;margin:5px;color:#000}
-.btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff}
+.btnOpcao{padding:8px 10px;background:#333;border:2px solid #555;border-radius:8px;cursor:pointer;font-size:12px;color:#fff;min-width:70px}
 .btnOpcao.ativo{background:#FFD700;color:#000;border-color:#FFD700}
 .boxGerador{background:#222;padding:20px;border-radius:15px;margin:20px auto;max-width:500px;border:3px solid #FFD700}
 .tituloSecao{color:#FFD700;font-size:16px;margin:10px 0}
@@ -27,6 +27,7 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 .resultadoGerado h3{color:#FFD700;margin:0 0 10px 0;text-align:center}
 .infoJogo{font-size:13px;margin:5px 0}
 .infoJogo span{font-weight:bold;color:#FFD700}
+.btnGerar{background:#FFD700;color:#000;font-size:18px;padding:15px 30px;margin-top:15px;width:100%}
 </style>
 </head>
 <body>
@@ -62,7 +63,7 @@ button{padding:10px 15px;background:#FFD700;border:none;border-radius:10px;curso
 <div class="tituloSecao">6. SEQUÊNCIAS QUE MAIS REPETEM</div>
 <div id="listaSeq" class="listaOpcoes"></div>
 
-<button style="font-size:18px;padding:15px 30px;margin-top:15px" onclick="gerarJogo()">🎲 GERAR JOGO INTELIGENTE</button>
+<button class="btnGerar" onclick="gerarJogo()">🎲 GERAR JOGO INTELIGENTE</button>
 <div id="resultado"></div>
 </div>
 </div>
@@ -75,9 +76,21 @@ const padroesZUD=['Z3-2U4-3D2-1','Z2-3U3-4D2-1','Z4-1U3-4D1-2','Z3-2U5-2D1-2','Z
 const opcoesPI=['6.9','7.8','8.7','9.6'];
 
 window.onload=function(){
+corrigirBancoAntigo();
 criarGrid();
 montarBotoes();
 atualizarMenu()
+}
+
+function corrigirBancoAntigo(){
+let mudou=false;
+bancoGerador.forEach(j=>{
+if(!j.padrao){
+j.padrao=calcularPadrao(j.numeros.map(Number));
+mudou=true;
+}
+});
+if(mudou)localStorage.setItem('bancoGerador',JSON.stringify(bancoGerador));
 }
 
 function toggleMenu(){document.getElementById('menuLateral').classList.toggle('ativo')}
@@ -195,12 +208,24 @@ function gerarJogo(){
 if(bancoGerador.length>=50)return alert("Limite de 50 jogos atingido. Apague alguns.");
 if(!filtro5x5&&!filtroPadrao&&!filtroZUD&&!filtroPI&&numerosFixos.length==0&&sequenciaFixa=="")return alert("Selecione pelo menos 1 filtro");
 let tentativas=0,jogo;
-while(tentativas<50000){
+while(tentativas<100000){
 jogo=[];
 let pool=Array.from({length:25},(_,i)=>(i+1).toString().padStart(2,'0'));
+
+// FORÇA OS FILTROS NA GERAÇÃO
 if(numerosFixos.length>0)jogo=[...numerosFixos];
 if(sequenciaFixa!="")jogo=[...new Set([...jogo,...sequenciaFixa.split(',')])];
+
+// Se tem filtro Padrao, já pré-seleciona as quantidades
+if(filtroPadrao){
+let [q1,q2,q3]=filtroPadrao.split('.').map(Number);
+let p1=pool.filter(n=>n>='01'&&n<='09');let p2=pool.filter(n=>n>='10'&&n<='19');let p3=pool.filter(n=>n>='20'&&n<='25');
+while(jogo.filter(n=>n>='01'&&n<='09').length<q1&&p1.length>0){let idx=Math.floor(Math.random()*p1.length);let val=p1.splice(idx,1)[0];if(!jogo.includes(val))jogo.push(val)}
+while(jogo.filter(n=>n>='10'&&n<='19').length<q2&&p2.length>0){let idx=Math.floor(Math.random()*p2.length);let val=p2.splice(idx,1)[0];if(!jogo.includes(val))jogo.push(val)}
+while(jogo.filter(n=>n>='20'&&n<='25').length<q3&&p3.length>0){let idx=Math.floor(Math.random()*p3.length);let val=p3.splice(idx,1)[0];if(!jogo.includes(val))jogo.push(val)}
 pool=pool.filter(n=>!jogo.includes(n));
+}
+
 while(jogo.length<15){
 let idx=Math.floor(Math.random()*pool.length);
 jogo.push(pool.splice(idx,1)[0])
@@ -213,9 +238,8 @@ salvarJogo(jogo,p5,pPad,pZ,pPI);
 montarBotoes();
 break
 }
-}
 tentativas++;
-if(tentativas>=50000)return alert("Não consegui gerar com esses filtros. Tente outros ou tire 1 filtro.")
+if(tentativas>=100000)return alert("Filtros muito restritos. Tire 1 filtro.")
 }
 }
 
